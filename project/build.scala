@@ -12,7 +12,6 @@
 //    limitations under the License.
 //
 
-import au.com.cba.omnia.uniform.dependency.UniformDependencyPlugin.depend.versions
 import sbt._
 import sbt.Keys._
 
@@ -20,7 +19,7 @@ import sbtunidoc.Plugin._, UnidocKeys._
 
 import au.com.cba.omnia.uniform.core.standard.StandardProjectPlugin._
 import au.com.cba.omnia.uniform.core.version.UniqueVersionPlugin._
-import au.com.cba.omnia.uniform.dependency.UniformDependencyPlugin._
+import au.com.cba.omnia.uniform.dependency.UniformDependencyPlugin._, depend.versions
 import au.com.cba.omnia.uniform.thrift.UniformThriftPlugin._
 import au.com.cba.omnia.uniform.assembly.UniformAssemblyPlugin._
 
@@ -75,15 +74,15 @@ object build extends Build {
           libraryDependencies ++= depend.omnia("maestro", maestroVersion)
       )
    ++ Seq(
-      watchSources <++= baseDirectory map(path => (path / "../project/MultiwayJoinGenerator.scala").get),
-      sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
+      watchSources ++= (baseDirectory.value / "../project/MultiwayJoinGenerator.scala").get,
+      sourceGenerators in Compile += Def.task {
         Seq(
           ("GeneratedJoin.scala",      MultiwayJoinGenerator.generateJoined(joins)),
           ("GeneratedBinder.scala",    MultiwayJoinGenerator.generateBinders(joins)),
           ("GeneratedJoinTypes.scala", MultiwayJoinGenerator.generateJoinTypes(joins)),
           ("GeneratedLift.scala",      MultiwayJoinGenerator.generateLift(joins))
         ).map { case (fileName, content) =>
-          val genFile = outdir / s"$fileName"
+          val genFile = (sourceManaged in Compile).value / s"$fileName"
           IO.write(genFile, content)
           genFile
         }
@@ -110,8 +109,8 @@ object build extends Build {
           libraryDependencies ++= depend.parquet()
         )
         ++ Seq(
-          sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
-            val genFile = outdir / "GeneratedScaldingLift.scala"
+          sourceGenerators in Compile += Def.task {
+            val genFile = (sourceManaged in Compile).value / "GeneratedScaldingLift.scala"
             IO.write(genFile, MultiwayJoinGenerator.generateLiftScalding(joins))
             Seq(genFile)
           }
@@ -119,11 +118,8 @@ object build extends Build {
         ++ Seq(
           // test settings
           libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
-          libraryDependencies += "uk.org.lidalia" % "slf4j-test" % "1.1.0" % "test" exclude("joda-time", "joda-time"),
-          dependencyOverrides += "com.google.guava" % "guava" % "14.0.1",  // required by slf4j-test,
-          // move hive-exec to the end of the classpath, so its guava classes don't shadow the above ones
-          (managedClasspath in Test) := (managedClasspath in Test).value
-            .sortBy(_.get(moduleID.key).map(_.name) == Some("hive-exec"))
+          libraryDependencies += "uk.org.lidalia" % "slf4j-test" % "1.1.0" % "test"
+            exclude("com.google.guava", "guava")
         )
   ).dependsOn(core % "compile->compile;test->test", tools)
 
@@ -136,11 +132,12 @@ object build extends Build {
         ++ uniformThriftSettings
         ++ uniformAssemblySettings
         ++ Seq(
-        watchSources <++= baseDirectory map(path => (path / "../USERGUIDE.markdown").get),
+        watchSources ++= (baseDirectory.value / "../USERGUIDE.markdown").get,
         libraryDependencies ++= depend.scalding(),
         libraryDependencies ++= depend.hadoopClasspath,
         libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
-        sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
+        sourceGenerators in Compile += Def.task {
+          val outdir = (sourceManaged in Compile).value
           val infile = "USERGUIDE.markdown"
           val source = io.Source.fromFile(infile)
           val fileContent = try source.mkString finally source.close()
@@ -177,8 +174,8 @@ object build extends Build {
           libraryDependencies ++= depend.omnia("maestro-test", maestroVersion)
         )
         ++ Seq(
-          sourceGenerators in Compile <+= (sourceManaged in Compile, streams) map { (outdir: File, s) =>
-            val genFile = outdir / "GeneratedMemoryLift.scala"
+          sourceGenerators in Compile += Def.task {
+            val genFile = (sourceManaged in Compile).value / "GeneratedMemoryLift.scala"
             IO.write(genFile, MultiwayJoinGenerator.generateLiftMemory(joins))
             Seq(genFile)
           }
