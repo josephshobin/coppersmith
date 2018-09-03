@@ -15,12 +15,11 @@
 // Package deliberately commented to reflect CoppersmithBootstrap
 //package commbank.coppersmith.tools
 
-import java.io.{File, PrintStream}
+import java.io.File
 import java.nio.file.Files
 
 import org.specs2.mutable.Specification
 
-import scala.io.Source
 import scala.tools.nsc.{Settings, Global}
 
 class CoppersmithBootstrapTest extends Specification {

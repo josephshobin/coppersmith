@@ -1,5 +1,5 @@
 //
-// Copyright 2016 Commonwealth Bank of Australia
+// Copyright 2016-2018 Commonwealth Bank of Australia
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import au.com.cba.omnia.uniform.thrift.UniformThriftPlugin._
 import au.com.cba.omnia.uniform.assembly.UniformAssemblyPlugin._
 
 object build extends Build {
-  val maestroVersion = "2.29.5-20180813103306-95d89a0-cdh-513"
+  val maestroVersion = "2.29.7-20180902223209-9f5082b-cdh-513"
 
   // Number of levels of joins supported
   val maxGeneratedJoinSize = 7
@@ -67,9 +67,7 @@ object build extends Build {
    ++ uniform.project("coppersmith-core", "commbank.coppersmith")
    ++ uniformThriftSettings
    ++ Seq(
-          libraryDependencies += "org.specs2" %% "specs2-matcher-extra" % versions.specs % "test"
-            exclude("org.scala-lang", "scala-compiler"),
-          libraryDependencies +=  "io.argonaut" %% "argonaut" % "6.1",
+          libraryDependencies ++= depend.argonaut(),
           libraryDependencies ++= depend.testing(configuration = "test"),
           libraryDependencies ++= depend.omnia("maestro", maestroVersion)
       )
@@ -117,11 +115,10 @@ object build extends Build {
         )
         ++ Seq(
           // test settings
-          libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
           libraryDependencies += "uk.org.lidalia" % "slf4j-test" % "1.1.0" % "test"
             exclude("com.google.guava", "guava")
         )
-  ).dependsOn(core % "compile->compile;test->test", tools)
+  ).dependsOn(core % "compile->compile;test->test", tools, testProject % "test")
 
   lazy val examples = Project(
     id = "examples"
@@ -135,7 +132,6 @@ object build extends Build {
         watchSources ++= (baseDirectory.value / "../USERGUIDE.markdown").get,
         libraryDependencies ++= depend.scalding(),
         libraryDependencies ++= depend.hadoopClasspath,
-        libraryDependencies ++= depend.omnia("maestro-test", maestroVersion, "test"),
         sourceGenerators in Compile += Def.task {
           val outdir = (sourceManaged in Compile).value
           val infile = "USERGUIDE.markdown"
@@ -170,10 +166,7 @@ object build extends Build {
         ++ uniform.project("coppersmith-test", "commbank.coppersmith.test")
         ++ uniformThriftSettings
         ++ Seq(
-          libraryDependencies ++= depend.testing(configuration = "test"),
-          libraryDependencies ++= depend.omnia("maestro-test", maestroVersion)
-        )
-        ++ Seq(
+          libraryDependencies ++= depend.omnia("maestro-test", maestroVersion),
           sourceGenerators in Compile += Def.task {
             val genFile = (sourceManaged in Compile).value / "GeneratedMemoryLift.scala"
             IO.write(genFile, MultiwayJoinGenerator.generateLiftMemory(joins))
@@ -186,8 +179,9 @@ object build extends Build {
     id = "plugin",
     base = file("plugin"),
     settings = uniform.project("coppersmith-plugin", "commbank.coppersmith.plugin") ++ Seq(
-      scalaVersion := "2.10.4",
-      crossScalaVersions := Seq("2.10.4"),
+      // align with uniform and tooling.etl-plugin
+      scalaVersion := "2.10.6",
+      crossScalaVersions := Seq("2.10.6"),
       sbtPlugin := true,
       scalacOptions := Seq()
     ))
@@ -202,7 +196,6 @@ object build extends Build {
         ++ Seq(
             libraryDependencies ++= Seq(
              "io.github.lukehutch" % "fast-classpath-scanner" % "1.9.7",
-             "org.specs2"         %% "specs2-matcher-extra"   % versions.specs     % "test",
              "org.scala-lang"      % "scala-compiler"         % scalaVersion.value % "test"
            ) ++ depend.testing(configuration = "test"),
           fork in Test := true,

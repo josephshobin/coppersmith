@@ -19,7 +19,7 @@ import org.joda.time.DateTime
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Gen
 
-import org.specs2._
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.matcher.Matcher
 
 import scalaz.NonEmptyList
