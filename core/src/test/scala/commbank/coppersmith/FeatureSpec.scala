@@ -20,7 +20,7 @@ import commbank.coppersmith.util.{Timestamp, Datestamp}
 import org.joda.time.DateTime
 import org.scalacheck._, Prop.forAll
 
-import org.specs2._
+import org.specs2.{ScalaCheck, Specification}
 import org.specs2.execute._, Typecheck._
 import org.specs2.matcher.TypecheckMatchers._
 

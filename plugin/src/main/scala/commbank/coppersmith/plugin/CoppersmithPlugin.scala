@@ -37,13 +37,8 @@ object CoppersmithPlugin extends AutoPlugin {
   ) ++
   inConfig(Metadata)(
     Seq(
-      metadata <<= (
-        libraryDependencies in Metadata,
-        fullClasspath in Runtime,
-        target,
-        version,
-        streams
-      ).map { (deps, cp, tgt, v, strms) =>
+      metadata := {
+        val cp = (fullClasspath in Runtime).value
         val artifacts = for {
           af       <- cp
           artifact <- af.get(artifact.key)
@@ -61,9 +56,9 @@ object CoppersmithPlugin extends AutoPlugin {
         if (res.length == 0) {
           sys.error("Metadata empty. Are your feature definitions in a subproject?")
         } else {
-          val metadataFile = tgt / s"coppersmith-features-${v}.json"
+          val metadataFile = target.value / s"coppersmith-features-${version.value}.json"
           IO.write(metadataFile, res.getBytes)
-          strms.log.info(s"Feature metadata written to $metadataFile")
+          streams.value.log.info(s"Feature metadata written to $metadataFile")
 
           metadataFile
         }
