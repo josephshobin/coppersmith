@@ -24,7 +24,7 @@ import au.com.cba.omnia.uniform.thrift.UniformThriftPlugin._
 import au.com.cba.omnia.uniform.assembly.UniformAssemblyPlugin._
 
 object build extends Build {
-  val maestroVersion = "2.29.8-20181010001219-5a0fba3-cdh-513"
+  val maestroVersion = "2.29.9-20181018110416-4eee311"
 
   // Number of levels of joins supported
   val maxGeneratedJoinSize = 7
